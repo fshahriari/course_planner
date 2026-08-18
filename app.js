@@ -215,9 +215,6 @@ function renderPlanTabs() {
             role="tab"
             aria-selected="${p.id === state.activePlanId}"
             data-plan-id="${p.id}">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-      </svg>
       ${escHtml(p.name)}
       ${state.plans.length > 1
         ? `<span class="tab-delete" data-delete-plan="${p.id}" aria-label="حذف پلن ${escHtml(p.name)}">✕</span>`
