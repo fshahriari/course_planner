@@ -60,6 +60,8 @@ function toggleTheme() {
     Math.max(cy, window.innerHeight - cy)
   );
 
+  root.classList.add('theme-transitioning');
+
   const transition = document.startViewTransition(() => applyTheme(nextTheme));
 
   transition.ready.then(() => {
@@ -72,11 +74,15 @@ function toggleTheme() {
         ],
       },
       {
-        duration: 480,
-        easing: 'cubic-bezier(.4, 0, .2, 1)',
+        duration: 450,
+        easing: 'linear',
         pseudoElement: '::view-transition-new(root)',
       }
     );
+  });
+
+  transition.finished.finally(() => {
+    root.classList.remove('theme-transitioning');
   });
 }
 
