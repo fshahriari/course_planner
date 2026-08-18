@@ -1175,16 +1175,25 @@ input[type="date"] { color-scheme: dark; }
 @media (max-width: 640px) {
   :root { --topbar-h: 56px; }
 
+  .topbar-inner {
+    padding: 0 8px;
+    gap: 8px;
+  }
+  .brand { gap: 8px; }
   .brand-sub { display: none; }
+  .brand-text h1 { font-size: .95rem; }
   
+  .topbar-actions { gap: 4px; }
+
   /* Show all topbar buttons as perfect square icons only */
   .topbar-actions .hide-mobile { display: none !important; }
   .topbar-actions .btn { 
-    width: 36px !important; 
-    height: 36px !important; 
+    width: 34px !important; 
+    height: 34px !important; 
     padding: 0 !important; 
     justify-content: center; 
     flex-shrink: 0;
+    gap: 0;
   }
   
   .btn-primary.btn-sm { font-size: .8rem; }
@@ -1198,7 +1207,7 @@ input[type="date"] { color-scheme: dark; }
 
   .modal-box { border-radius: var(--r-lg); }
 
-  .plan-tabs { max-width: calc(100vw - 180px); }
+  .plan-tabs { max-width: none; min-width: 70px; }
 }
 
 @media (max-width: 420px) {
