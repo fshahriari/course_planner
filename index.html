@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>انتخاب واحد | برنامه‌ریز ترم</title>
+  <meta name="description" content="برنامه‌ریز هوشمند انتخاب واحد — مدیریت درس‌ها، برنامه هفتگی، و پلن‌های مختلف" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Apply saved theme BEFORE first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('course_planner_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════ -->
+<div id="app">
+
+  <!-- ── TOP BAR ── -->
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-icon">📚</span>
+        <div class="brand-text">
+          <h1>انتخاب واحد</h1>
+          <span class="brand-sub">برنامه‌ریز ترم</span>
+        </div>
+      </div>
+
+      <nav class="plan-tabs" role="tablist" aria-label="پلن‌های انتخاب واحد">
+        <!-- filled by JS -->
+      </nav>
+
+      <div class="topbar-actions">
+        <button id="btn-add-plan" class="btn btn-ghost btn-sm" title="پلن جدید">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          پلن جدید
+        </button>
+        <button id="btn-theme-toggle" class="btn btn-ghost btn-icon theme-toggle-btn" title="تغییر تم" aria-label="تغییر تم">
+          <span class="theme-icons">
+            <!-- Sun: نمایش در دارک مود -->
+            <svg class="t-icon t-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <!-- Moon: نمایش در لایت مود -->
+            <svg class="t-icon t-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+        </button>
+        <button id="btn-export-pdf" class="btn btn-primary btn-sm" title="خروجی PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="main-content" id="main">
+
+    <!-- STATS BAR -->
+    <section class="stats-bar" aria-label="آمار کلی">
+      <div class="stat-card">
+        <span class="stat-label">مجموع واحد</span>
+        <span class="stat-value" id="stat-units">۰</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">تعداد درس</span>
+        <span class="stat-value" id="stat-courses">۰</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">روزهای دانشگاه</span>
+        <span class="stat-value" id="stat-days">۰</span>
+      </div>
+      <div class="stat-card" id="stat-conflict-card" style="display:none;">
+        <span class="stat-label">⚠️ تداخل</span>
+        <span class="stat-value conflict-value" id="stat-conflicts">۰</span>
+      </div>
+    </section>
+
+    <!-- TWO-COLUMN LAYOUT -->
+    <div class="layout">
+
+      <!-- ── LEFT PANEL: Course List ── -->
+      <aside class="panel courses-panel" id="courses-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">درس‌ها</h2>
+          <button id="btn-add-course" class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            افزودن درس
+          </button>
+        </div>
+        <div class="courses-list" id="courses-list" role="list">
+          <!-- filled by JS -->
+        </div>
+        <div class="empty-state" id="courses-empty">
+          <div class="empty-icon">📖</div>
+          <p>هنوز درسی اضافه نشده</p>
+          <button class="btn btn-primary" id="btn-add-course-empty">افزودن اولین درس</button>
+        </div>
+      </aside>
+
+      <!-- ── RIGHT PANEL: Weekly Schedule ── -->
+      <section class="panel schedule-panel" id="schedule-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">برنامه هفتگی</h2>
+          <div class="view-toggle" role="group" aria-label="نوع نمایش">
+            <button class="view-btn active" data-view="week" id="view-week">هفتگی</button>
+            <button class="view-btn" data-view="exams" id="view-exams">امتحانات</button>
+          </div>
+        </div>
+
+        <!-- WEEKLY VIEW -->
+        <div id="view-week-content" class="view-content active">
+          <div class="week-grid" id="week-grid" role="grid" aria-label="برنامه هفتگی">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- EXAMS VIEW -->
+        <div id="view-exams-content" class="view-content">
+          <div class="exams-list" id="exams-list">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
+
+<!-- Add/Edit Course Modal -->
+<dialog id="modal-course" class="modal" aria-modal="true" aria-labelledby="modal-course-title">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-course-title">افزودن درس جدید</h3>
+      <button class="modal-close" id="modal-course-close" aria-label="بستن">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form id="form-course" class="modal-form" novalidate>
+      <input type="hidden" id="course-edit-id" />
+
+      <!-- Row 1: Name + Units -->
+      <div class="form-row">
+        <div class="form-group form-group-grow">
+          <label for="course-name">نام درس <span class="required">*</span></label>
+          <input type="text" id="course-name" placeholder="مثلاً: ریاضی مهندسی" autocomplete="off" required />
+        </div>
+        <div class="form-group form-group-sm">
+          <label for="course-units">واحد <span class="required">*</span></label>
+          <input type="number" id="course-units" min="1" max="4" value="3" required />
+        </div>
+      </div>
+
+      <!-- Row 2: Professor -->
+      <div class="form-group">
+        <label for="course-prof">استاد</label>
+        <input type="text" id="course-prof" placeholder="نام استاد" autocomplete="off" />
+      </div>
+
+      <!-- Row 3: Class Days -->
+      <div class="form-group">
+        <label>روزهای کلاس <span class="required">*</span></label>
+        <div class="days-picker" id="days-picker" role="group" aria-label="روزهای هفته">
+          <button type="button" class="day-btn" data-day="0">شنبه</button>
+          <button type="button" class="day-btn" data-day="1">یک‌شنبه</button>
+          <button type="button" class="day-btn" data-day="2">دوشنبه</button>
+          <button type="button" class="day-btn" data-day="3">سه‌شنبه</button>
+          <button type="button" class="day-btn" data-day="4">چهارشنبه</button>
+          <button type="button" class="day-btn" data-day="5">پنج‌شنبه</button>
+        </div>
+      </div>
+
+      <!-- Row 4: Class Time -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="course-time-start">ساعت شروع کلاس</label>
+          <input type="time" id="course-time-start" value="08:00" />
+        </div>
+        <div class="form-group">
+          <label for="course-time-end">ساعت پایان کلاس</label>
+          <input type="time" id="course-time-end" value="10:00" />
+        </div>
+      </div>
+
+      <!-- Row 5: Exam -->
+      <div class="form-row">
+        <div class="form-group form-group-grow">
+          <label for="course-exam-date-display">تاریخ امتحان</label>
+          <div class="jalali-picker-wrap">
+            <input type="text" id="course-exam-date-display"
+                   placeholder="انتخاب تاریخ شمسی..."
+                   readonly class="jalali-input"
+                   autocomplete="off"
+                   aria-haspopup="true" />
+            <input type="hidden" id="course-exam-date" />
+            <div class="jcal-popover" id="jalali-cal" hidden></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="course-exam-time">ساعت امتحان</label>
+          <input type="time" id="course-exam-time" />
+        </div>
+      </div>
+
+      <!-- Row 6: Sub-sections -->
+      <div class="form-group">
+        <label>بخش‌های جانبی</label>
+        <div class="subsections" id="subsections-area">
+          <!-- filled by JS -->
+        </div>
+        <div class="subsection-add-row">
+          <button type="button" class="btn btn-ghost btn-xs" id="btn-add-ta">+ TA</button>
+          <button type="button" class="btn btn-ghost btn-xs" id="btn-add-lab">+ آزمایشگاه</button>
+        </div>
+      </div>
+
+      <!-- Row 7: Color -->
+      <div class="form-group">
+        <label>رنگ درس</label>
+        <div class="color-picker" id="color-picker" role="group" aria-label="انتخاب رنگ">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-course">انصراف</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-course">ذخیره درس</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Confirm Delete Modal -->
+<dialog id="modal-confirm" class="modal modal-sm" aria-modal="true" aria-labelledby="modal-confirm-title">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-confirm-title">حذف درس</h3>
+    </div>
+    <p id="modal-confirm-msg" class="confirm-msg">آیا مطمئن هستید؟</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-confirm-cancel">انصراف</button>
+      <button class="btn btn-danger" id="btn-confirm-ok">حذف</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Plan Name Modal -->
+<dialog id="modal-plan" class="modal modal-sm" aria-modal="true" aria-labelledby="modal-plan-title">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-plan-title">پلن جدید</h3>
+      <button class="modal-close" id="modal-plan-close" aria-label="بستن">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-form">
+      <div class="form-group">
+        <label for="plan-name-input">نام پلن</label>
+        <input type="text" id="plan-name-input" placeholder="مثلاً: پلن الف" autocomplete="off" maxlength="30" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-plan-cancel">انصراف</button>
+      <button class="btn btn-primary" id="btn-plan-save">ساخت پلن</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Toast -->
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
+<script src="jalali-picker.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
