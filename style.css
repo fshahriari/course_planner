@@ -1176,9 +1176,12 @@ input[type="date"] { color-scheme: dark; }
   :root { --topbar-h: 56px; }
 
   .brand-sub { display: none; }
-  .topbar-actions .btn-ghost { display: none; }
+  
+  /* Show all topbar buttons as icons only */
+  .topbar-actions .hide-mobile { display: none; }
+  .topbar-actions .btn { padding: 6px; }
 
-  .btn-primary.btn-sm { padding: 6px 10px; font-size: .8rem; }
+  .btn-primary.btn-sm { padding: 6px; font-size: .8rem; }
 
   .stats-bar { gap: 8px; }
   .stat-card { padding: 10px 14px; min-width: 80px; }
