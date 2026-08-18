@@ -221,19 +221,12 @@ body {
   display: block;
 }
 
-.topbar-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  flex: 1;
-}
-
 /* Plan tabs */
 .plan-tabs {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 6px 4px;
@@ -355,6 +348,9 @@ body {
   border-radius: var(--r-sm);
   overflow: hidden;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .theme-icons {
