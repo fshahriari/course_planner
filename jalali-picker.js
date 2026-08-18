@@ -109,37 +109,16 @@ class JalaliPicker {
     this._open = true;
     this._render();
     this.calEl.removeAttribute('hidden');
-    this._position();
-  }
-
-  _position() {
-    const rect = this.inputEl.getBoundingClientRect();
-    const CAL_W = 294;
-    // RTL: right-align calendar to input's right edge
-    let right = window.innerWidth - rect.right;
-    right = Math.max(8, Math.min(right, window.innerWidth - CAL_W - 8));
-    let top = rect.bottom + 6;
-    // Flip upward if not enough space below
-    if (top + 320 > window.innerHeight) top = rect.top - 320 - 6;
-
-    Object.assign(this.calEl.style, {
-      position: 'fixed',
-      top: top + 'px',
-      right: right + 'px',
-      left: 'auto',
-      width: CAL_W + 'px',
-      zIndex: '99999',
-    });
   }
 
   _prevMonth() {
     if (--this._vm < 1) { this._vm = 12; this._vy--; }
-    this._render(); this._position();
+    this._render();
   }
 
   _nextMonth() {
     if (++this._vm > 12) { this._vm = 1; this._vy++; }
-    this._render(); this._position();
+    this._render();
   }
 
   _selectDay(jd) {
