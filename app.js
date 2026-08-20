@@ -278,7 +278,7 @@ function renderCourseList() {
         <div class="course-info">
           <div class="course-name">${escHtml(c.name)}</div>
           <div class="course-meta">
-            <span>${toPersianNum(c.units)} واحد</span>
+            <span>${(subs || []).some(s => s.type === 'lab') ? `${toPersianNum(c.units)} + ۱` : toPersianNum(c.units)} واحد</span>
             ${c.prof ? `<span>· ${escHtml(c.prof)}</span>` : ''}
             ${hasConflict ? '<span class="course-badge badge-conflict">⚠ تداخل</span>' : ''}
           </div>
@@ -296,7 +296,10 @@ function renderCourseList() {
 /* ── STATS ── */
 function renderStats() {
   const courses = getActiveCourses();
-  const totalUnits = courses.reduce((s, c) => s + Number(c.units || 0), 0);
+  const totalUnits = courses.reduce((s, c) => {
+    const hasLab = (c.subsections || []).some(sub => sub.type === 'lab');
+    return s + Number(c.units || 0) + (hasLab ? 1 : 0);
+  }, 0);
   const activeDays = new Set(courses.flatMap(c => c.days)).size;
   const conflicts = detectConflicts(courses).size / 2;
 
