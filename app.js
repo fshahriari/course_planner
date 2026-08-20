@@ -324,117 +324,97 @@ function renderWeekGrid() {
     return;
   }
 
-  // Build slot map: key `${dayIndex}-${timeSlot}` → array of entries
-  const slotMap = {};
-
-  courses.forEach(c => {
-    const color = COLORS.find(x => x.key === c.colorKey)?.val || COLORS[0].val;
-
-    // ── Main course on its own days ──
-    if (c.timeStart) {
-      c.days.forEach(day => {
-        const key = `${day}-${c.timeStart}`;
-        (slotMap[key] = slotMap[key] || []).push({
-          name: c.name, start: c.timeStart, end: c.timeEnd,
-          color, type: 'کلاس', isSubsection: false,
-        });
-      });
-    }
-
-    // ── Subsections on THEIR OWN independent days ──
-    (c.subsections || []).forEach(s => {
-      if (!s.timeStart || !s.days?.length) return;
-      s.days.forEach(day => {
-        const key = `${day}-${s.timeStart}`;
-        (slotMap[key] = slotMap[key] || []).push({
-          name: c.name,
-          start: s.timeStart, end: s.timeEnd,
-          color, type: s.type === 'ta' ? 'TA' : 'آزمایشگاه',
-          isSubsection: true,
-          taName: s.taName || '',
-        });
-      });
-    });
-  });
-
-  // Determine time range and unique slots
+  // Determine time range based on min and max times
   let minT = 8 * 60, maxT = 18 * 60;
-  const activeTimes = new Set(TIME_SLOTS);
   
   courses.forEach(c => {
-    if (c.timeStart) {
-      minT = Math.min(minT, timeToMinutes(c.timeStart));
-      activeTimes.add(c.timeStart);
-    }
-    if (c.timeEnd) {
-      maxT = Math.max(maxT, timeToMinutes(c.timeEnd));
-    }
+    if (c.timeStart) minT = Math.min(minT, timeToMinutes(c.timeStart));
+    if (c.timeEnd)   maxT = Math.max(maxT, timeToMinutes(c.timeEnd));
     (c.subsections || []).forEach(s => {
-      if (s.timeStart) {
-        minT = Math.min(minT, timeToMinutes(s.timeStart));
-        activeTimes.add(s.timeStart);
-      }
-      if (s.timeEnd) {
-        maxT = Math.max(maxT, timeToMinutes(s.timeEnd));
-      }
+      if (s.timeStart) minT = Math.min(minT, timeToMinutes(s.timeStart));
+      if (s.timeEnd)   maxT = Math.max(maxT, timeToMinutes(s.timeEnd));
     });
   });
 
-  const sortedSlots = Array.from(activeTimes).sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+  // Round down to nearest hour, add padding
+  minT = Math.max(0, Math.floor(minT / 60) * 60 - 60); // 1 hour padding before
+  maxT = Math.min(24 * 60, Math.ceil(maxT / 60) * 60 + 60); // 1 hour padding after
   
-  const slots = sortedSlots.filter(t => {
-    const m = timeToMinutes(t);
-    return m >= minT - 30 && m <= maxT;
-  });
+  const totalMinutes = maxT - minT;
+  const pxPerMinute = 1.3; // Height scale
+  const totalHeight = totalMinutes * pxPerMinute;
 
-  const table = document.createElement('table');
-  table.className = 'week-table';
-  table.setAttribute('role', 'grid');
-
+  let html = `<div class="cal-wrapper" style="--cal-height: ${totalHeight}px;">`;
+  
   // Header
-  const thead = table.createTHead();
-  const hrow = thead.insertRow();
-  hrow.insertCell().innerHTML = `<th class="week-time-col">ساعت</th>`;
+  html += `<div class="cal-header"><div class="cal-time-col">ساعت</div>`;
   DAYS.forEach(d => {
-    const th = document.createElement('th');
-    th.textContent = d;
-    hrow.appendChild(th);
+    html += `<div class="cal-day-col">${d}</div>`;
   });
+  html += `</div>`;
 
   // Body
-  const tbody = table.createTBody();
-  slots.forEach(slot => {
-    const tr = tbody.insertRow();
-    const timeTd = tr.insertCell();
-    timeTd.className = 'week-time-col';
-    timeTd.textContent = slot;
+  html += `<div class="cal-body">`;
+  
+  // Background grid lines and time labels
+  html += `<div class="cal-bg">`;
+  for (let m = minT; m <= maxT; m += 30) {
+    const top = (m - minT) * pxPerMinute;
+    const isHour = m % 60 === 0;
+    html += `<div class="cal-bg-line ${isHour ? 'hour' : 'half'}" style="top: ${top}px;"></div>`;
+    if (isHour && m < maxT) {
+      const hStr = Math.floor(m / 60).toString().padStart(2, '0') + ':00';
+      html += `<div class="cal-time-label" style="top: ${top}px;">${toPersianNum(hStr)}</div>`;
+    }
+  }
+  html += `</div>`;
 
-    DAYS.forEach((_, dayIdx) => {
-      const td = tr.insertCell();
-      const key = `${dayIdx}-${slot}`;
-      const entries = slotMap[key] || [];
-        entries.forEach(entry => {
-          const div = document.createElement('div');
-          // Subsections get a dashed border + lower opacity to visually differ from main class
-          div.className = `week-slot ${entry.isSubsection ? 'week-slot-sub' : ''}`;
-          div.style.cssText = entry.isSubsection
-            ? `background:${entry.color}15;border-color:${entry.color}44;color:${entry.color};`
-            : `background:${entry.color}22;border-color:${entry.color}55;color:${entry.color};`;
-          const subLabel = entry.isSubsection && entry.taName
-            ? `<div class="week-slot-sub-label">${escHtml(entry.taName)}</div>` : '';
-          div.innerHTML = `
-            <div class="week-slot-name">${escHtml(entry.name)}</div>
-            ${subLabel}
-            <div class="week-slot-time">${entry.start}–${entry.end}</div>
-            <span class="week-slot-type">${entry.type}</span>
-          `;
-          td.appendChild(div);
-        });
+  // Day Columns
+  html += `<div class="cal-days-container">`;
+  DAYS.forEach((_, dayIdx) => {
+    html += `<div class="cal-day">`;
+    
+    courses.forEach(c => {
+      const color = COLORS.find(x => x.key === c.colorKey)?.val || COLORS[0].val;
+      
+      if (c.timeStart && c.timeEnd && c.days.includes(dayIdx)) {
+        html += renderCalEvent(c.name, c.timeStart, c.timeEnd, color, 'کلاس', false, '', minT, pxPerMinute);
+      }
+      
+      (c.subsections || []).forEach(s => {
+        if (s.timeStart && s.timeEnd && s.days?.includes(dayIdx)) {
+          html += renderCalEvent(c.name, s.timeStart, s.timeEnd, color, s.type === 'ta' ? 'TA' : 'آزمایشگاه', true, s.taName, minT, pxPerMinute);
+        }
+      });
     });
+    
+    html += `</div>`;
   });
+  html += `</div></div></div>`;
 
-  el.innerHTML = '';
-  el.appendChild(table);
+  el.innerHTML = html;
+}
+
+function renderCalEvent(name, start, end, color, type, isSub, taName, minT, pxPerMinute) {
+  const sM = timeToMinutes(start);
+  const eM = timeToMinutes(end);
+  const top = (sM - minT) * pxPerMinute;
+  const height = (eM - sM) * pxPerMinute;
+  
+  const css = isSub
+    ? `background:${color}15;border:1px dashed ${color}88;color:${color};`
+    : `background:${color}22;border:1px solid ${color}55;border-right:3px solid ${color};color:${color};`;
+    
+  const subLabel = isSub && taName ? `<div class="cal-event-sub">${escHtml(taName)}</div>` : '';
+  
+  return `
+    <div class="cal-event ${isSub ? 'is-sub' : ''}" style="top: ${top}px; height: ${height}px; ${css}">
+      <div class="cal-event-name">${escHtml(name)}</div>
+      ${subLabel}
+      <div class="cal-event-time">${toPersianNum(start)}–${toPersianNum(end)}</div>
+      <div class="cal-event-type">${type}</div>
+    </div>
+  `;
 }
 
 /* ── EXAMS LIST ── */
