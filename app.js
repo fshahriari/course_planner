@@ -690,15 +690,27 @@ function exportImage() {
   
   // Wait a frame for view to switch
   setTimeout(() => {
+    if (typeof html2canvas === 'undefined') {
+      toast('کتابخانه خروجی عکس در دسترس نیست', 'error');
+      return;
+    }
+    
     // Add a temporary class to fix dimensions for image export if needed
-    el.style.background = getComputedStyle(document.body).getPropertyValue('--bg-card');
+    const bgCard = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#fff';
+    el.style.backgroundColor = bgCard;
+    
+    // Temporarily disable overflow so html2canvas renders the full width
+    const gridEl = document.getElementById('week-grid');
+    const oldOverflow = gridEl ? gridEl.style.overflow : '';
+    if (gridEl) gridEl.style.overflow = 'visible';
     
     html2canvas(el, {
       scale: 2,
       useCORS: true,
-      backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-body')
+      backgroundColor: bgCard
     }).then(canvas => {
-      el.style.background = ''; // restore
+      el.style.backgroundColor = '';
+      if (gridEl) gridEl.style.overflow = oldOverflow;
       
       const plan = getActivePlan();
       const link = document.createElement('a');
@@ -708,6 +720,8 @@ function exportImage() {
     }).catch(err => {
       console.error(err);
       toast('خطا در گرفتن خروجی عکس', 'error');
+      el.style.backgroundColor = '';
+      if (gridEl) gridEl.style.overflow = oldOverflow;
     });
   }, 300);
 }
