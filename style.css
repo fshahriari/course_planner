@@ -464,7 +464,6 @@ body {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -.02em;
 }
 
 /* ── COURSES LIST ─────────────────────────────────────────────── */
@@ -1364,7 +1363,6 @@ input[type="date"] { color-scheme: dark; }
   font-size: .9rem;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -.01em;
   flex: 1;
   text-align: center;
 }

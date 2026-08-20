@@ -671,24 +671,25 @@ function switchView(view) {
 
 // ── EXPORT ──────────────────────────────────────────────────
 function exportPDF() {
-  // Ensure week view is active for print
-  switchView('week');
   const plan = getActivePlan();
   const oldTitle = document.title;
-  document.title = `انتخاب واحد — ${plan.name}`;
+  
+  // Set a descriptive title for the PDF
+  const isExams = document.getElementById('view-exams-content').classList.contains('active');
+  const viewName = isExams ? 'امتحانات' : 'برنامه هفتگی';
+  
+  document.title = `انتخاب واحد — ${plan.name} — ${viewName}`;
   window.print();
   document.title = oldTitle;
   toast('در حال آماده‌سازی PDF…', 'success', 2000);
 }
 
 function exportImage() {
-  switchView('week');
   const el = document.querySelector('.schedule-panel');
   if (!el) return;
   
   toast('در حال آماده‌سازی عکس…', 'success');
   
-  // Wait a frame for view to switch
   setTimeout(() => {
     if (typeof html2canvas === 'undefined') {
       toast('کتابخانه خروجی عکس در دسترس نیست', 'error');
@@ -713,8 +714,11 @@ function exportImage() {
       if (gridEl) gridEl.style.overflow = oldOverflow;
       
       const plan = getActivePlan();
+      const isExams = document.getElementById('view-exams-content').classList.contains('active');
+      const viewName = isExams ? 'امتحانات' : 'برنامه';
+      
       const link = document.createElement('a');
-      link.download = `برنامه_${plan.name}.png`;
+      link.download = `${viewName}_${plan.name}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     }).catch(err => {
@@ -723,7 +727,7 @@ function exportImage() {
       el.style.backgroundColor = '';
       if (gridEl) gridEl.style.overflow = oldOverflow;
     });
-  }, 300);
+  }, 100);
 }
 
 // ── ESCAPE HTML ────────────────────────────────────────────────
