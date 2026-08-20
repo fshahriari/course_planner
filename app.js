@@ -669,7 +669,7 @@ function switchView(view) {
   });
 }
 
-// ── PDF EXPORT ──────────────────────────────────────────────────
+// ── EXPORT ──────────────────────────────────────────────────
 function exportPDF() {
   // Ensure week view is active for print
   switchView('week');
@@ -679,6 +679,37 @@ function exportPDF() {
   window.print();
   document.title = oldTitle;
   toast('در حال آماده‌سازی PDF…', 'success', 2000);
+}
+
+function exportImage() {
+  switchView('week');
+  const el = document.querySelector('.schedule-panel');
+  if (!el) return;
+  
+  toast('در حال آماده‌سازی عکس…', 'success');
+  
+  // Wait a frame for view to switch
+  setTimeout(() => {
+    // Add a temporary class to fix dimensions for image export if needed
+    el.style.background = getComputedStyle(document.body).getPropertyValue('--bg-card');
+    
+    html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-body')
+    }).then(canvas => {
+      el.style.background = ''; // restore
+      
+      const plan = getActivePlan();
+      const link = document.createElement('a');
+      link.download = `برنامه_${plan.name}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }).catch(err => {
+      console.error(err);
+      toast('خطا در گرفتن خروجی عکس', 'error');
+    });
+  }, 300);
 }
 
 // ── ESCAPE HTML ────────────────────────────────────────────────
@@ -696,8 +727,9 @@ function bindEvents() {
   // ─ Topbar: add plan ─
   document.getElementById('btn-add-plan').addEventListener('click', openPlanModal);
 
-  // ─ Topbar: PDF ─
+  // ─ Topbar: PDF & Image ─
   document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
+  document.getElementById('btn-export-img').addEventListener('click', exportImage);
 
   // ─ Add course buttons ─
   document.getElementById('btn-add-course').addEventListener('click', () => openCourseModal());

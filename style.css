@@ -1196,15 +1196,41 @@ input[type="date"] { color-scheme: dark; }
 
 /* ── PRINT / PDF ──────────────────────────────────────────────── */
 @media print {
+  @page { margin: 1cm; size: auto; }
+  
   .topbar, .stats-bar, .courses-panel,
   .panel-header .btn, .view-toggle,
   .modal, .toast-container { display: none !important; }
 
-  body { background: #fff; color: #000; }
+  html, body {
+    background: #fff; color: #000;
+    height: auto; min-height: 0;
+    margin: 0; padding: 0;
+    overflow: visible;
+  }
 
-  .main-content { padding: 0; }
-  .layout { grid-template-columns: 1fr; }
-  .schedule-panel { border: none; box-shadow: none; }
+  .main-content { 
+    padding: 0; 
+    margin: 0; 
+    min-height: 0;
+  }
+  
+  .layout { 
+    grid-template-columns: 1fr; 
+    gap: 0;
+  }
+  
+  .schedule-panel { 
+    border: none; 
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cal-wrapper {
+    border: none !important;
+    page-break-inside: avoid;
+  }
 
   .week-slot {
     -webkit-print-color-adjust: exact;
