@@ -357,13 +357,32 @@ function renderWeekGrid() {
     });
   });
 
-  // Determine time range
+  // Determine time range and unique slots
   let minT = 8 * 60, maxT = 18 * 60;
+  const activeTimes = new Set(TIME_SLOTS);
+  
   courses.forEach(c => {
-    if (c.timeStart) minT = Math.min(minT, timeToMinutes(c.timeStart));
-    if (c.timeEnd)   maxT = Math.max(maxT, timeToMinutes(c.timeEnd));
+    if (c.timeStart) {
+      minT = Math.min(minT, timeToMinutes(c.timeStart));
+      activeTimes.add(c.timeStart);
+    }
+    if (c.timeEnd) {
+      maxT = Math.max(maxT, timeToMinutes(c.timeEnd));
+    }
+    (c.subsections || []).forEach(s => {
+      if (s.timeStart) {
+        minT = Math.min(minT, timeToMinutes(s.timeStart));
+        activeTimes.add(s.timeStart);
+      }
+      if (s.timeEnd) {
+        maxT = Math.max(maxT, timeToMinutes(s.timeEnd));
+      }
+    });
   });
-  const slots = TIME_SLOTS.filter(t => {
+
+  const sortedSlots = Array.from(activeTimes).sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+  
+  const slots = sortedSlots.filter(t => {
     const m = timeToMinutes(t);
     return m >= minT - 30 && m <= maxT;
   });
@@ -796,7 +815,15 @@ function bindEvents() {
   document.getElementById('btn-plan-save').addEventListener('click', () => {
     const name = document.getElementById('plan-name-input').value.trim();
     if (!name) { toast('نام پلن الزامی است', 'error'); return; }
-    const newPlan = { id: uid(), name, courses: [] };
+    const copyCourses = document.getElementById('plan-copy-active')?.checked;
+    const activeCourses = getActiveCourses();
+    
+    // Deep clone courses if copying
+    const newCourses = copyCourses ? JSON.parse(JSON.stringify(activeCourses)) : [];
+    // Give them new IDs so they are distinct
+    newCourses.forEach(c => { c.id = uid(); });
+    
+    const newPlan = { id: uid(), name, courses: newCourses };
     state.plans.push(newPlan);
     state.activePlanId = newPlan.id;
     saveState(); render();
