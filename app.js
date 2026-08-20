@@ -401,9 +401,14 @@ function renderCalEvent(name, start, end, color, type, isSub, taName, minT, pxPe
   const top = (sM - minT) * pxPerMinute;
   const height = (eM - sM) * pxPerMinute;
   
+  const bgSub = color.replace(')', ' / 12%)');
+  const borderSub = color.replace(')', ' / 30%)');
+  const bgMain = color.replace(')', ' / 20%)');
+  const borderMain = color.replace(')', ' / 40%)');
+
   const css = isSub
-    ? `background:${color}15;border:1px dashed ${color}88;color:${color};`
-    : `background:${color}22;border:1px solid ${color}55;border-right:3px solid ${color};color:${color};`;
+    ? `background:${bgSub}; border:1px dashed ${borderSub}; color:${color};`
+    : `background:${bgMain}; border:1px solid ${borderMain}; border-right:3px solid ${color}; color:${color};`;
     
   const subLabel = isSub && taName ? `<div class="cal-event-sub">${escHtml(taName)}</div>` : '';
   
