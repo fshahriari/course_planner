@@ -669,38 +669,75 @@ function switchView(view) {
   });
 }
 
-// ── EXPORT ──────────────────────────────────────────────────
+// ── EXPORT MODAL ──────────────────────────────────────────────────
+function openExportModal() {
+  document.getElementById('modal-export').showModal();
+}
+function closeExportModal() {
+  document.getElementById('modal-export').close();
+}
+
+function getExportConfig() {
+  return {
+    week: document.getElementById('export-opt-week').checked,
+    exams: document.getElementById('export-opt-exams').checked
+  };
+}
+
+function applyExportViews(config) {
+  const oldActive = document.querySelector('.view-content.active')?.id;
+  document.getElementById('view-week-content').classList.toggle('active', config.week);
+  document.getElementById('view-exams-content').classList.toggle('active', config.exams);
+  return oldActive;
+}
+
+function restoreExportViews(oldActive) {
+  document.querySelectorAll('.view-content').forEach(v => {
+    v.classList.toggle('active', v.id === oldActive);
+  });
+}
+
 function exportPDF() {
+  const config = getExportConfig();
+  if (!config.week && !config.exams) { toast('حداقل یک مورد را انتخاب کنید', 'error'); return; }
+  
+  closeExportModal();
+  const oldActive = applyExportViews(config);
+  
   const plan = getActivePlan();
   const oldTitle = document.title;
   
-  // Set a descriptive title for the PDF
-  const isExams = document.getElementById('view-exams-content').classList.contains('active');
-  const viewName = isExams ? 'امتحانات' : 'برنامه هفتگی';
-  
+  const viewName = (config.week && config.exams) ? 'کامل' : (config.exams ? 'امتحانات' : 'برنامه هفتگی');
   document.title = `انتخاب واحد — ${plan.name} — ${viewName}`;
+  
   window.print();
+  
   document.title = oldTitle;
+  restoreExportViews(oldActive);
   toast('در حال آماده‌سازی PDF…', 'success', 2000);
 }
 
 function exportImage() {
+  const config = getExportConfig();
+  if (!config.week && !config.exams) { toast('حداقل یک مورد را انتخاب کنید', 'error'); return; }
+
+  closeExportModal();
+  const oldActive = applyExportViews(config);
   const el = document.querySelector('.schedule-panel');
-  if (!el) return;
+  if (!el) { restoreExportViews(oldActive); return; }
   
   toast('در حال آماده‌سازی عکس…', 'success');
   
   setTimeout(() => {
     if (typeof html2canvas === 'undefined') {
       toast('کتابخانه خروجی عکس در دسترس نیست', 'error');
+      restoreExportViews(oldActive);
       return;
     }
     
-    // Add a temporary class to fix dimensions for image export if needed
     const bgCard = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#fff';
     el.style.backgroundColor = bgCard;
     
-    // Temporarily disable overflow so html2canvas renders the full width
     const gridEl = document.getElementById('week-grid');
     const oldOverflow = gridEl ? gridEl.style.overflow : '';
     if (gridEl) gridEl.style.overflow = 'visible';
@@ -712,10 +749,10 @@ function exportImage() {
     }).then(canvas => {
       el.style.backgroundColor = '';
       if (gridEl) gridEl.style.overflow = oldOverflow;
+      restoreExportViews(oldActive);
       
       const plan = getActivePlan();
-      const isExams = document.getElementById('view-exams-content').classList.contains('active');
-      const viewName = isExams ? 'امتحانات' : 'برنامه';
+      const viewName = (config.week && config.exams) ? 'کامل' : (config.exams ? 'امتحانات' : 'برنامه');
       
       const link = document.createElement('a');
       link.download = `${viewName}_${plan.name}.png`;
@@ -726,6 +763,7 @@ function exportImage() {
       toast('خطا در گرفتن خروجی عکس', 'error');
       el.style.backgroundColor = '';
       if (gridEl) gridEl.style.overflow = oldOverflow;
+      restoreExportViews(oldActive);
     });
   }, 100);
 }
@@ -745,9 +783,17 @@ function bindEvents() {
   // ─ Topbar: add plan ─
   document.getElementById('btn-add-plan').addEventListener('click', openPlanModal);
 
-  // ─ Topbar: PDF & Image ─
-  document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
-  document.getElementById('btn-export-img').addEventListener('click', exportImage);
+  // ─ Topbar: Export Modal ─
+  document.getElementById('btn-export-modal').addEventListener('click', openExportModal);
+  
+  // ─ Export Modal Actions ─
+  document.getElementById('modal-export-close').addEventListener('click', closeExportModal);
+  document.getElementById('btn-export-cancel').addEventListener('click', closeExportModal);
+  document.getElementById('modal-export').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeExportModal();
+  });
+  document.getElementById('btn-export-do-pdf').addEventListener('click', exportPDF);
+  document.getElementById('btn-export-do-img').addEventListener('click', exportImage);
 
   // ─ Add course buttons ─
   document.getElementById('btn-add-course').addEventListener('click', () => openCourseModal());
