@@ -579,7 +579,7 @@ function getSelectedColorKey() {
 }
 
 function getSelectedDays() {
-  return [...document.querySelectorAll('.day-btn.selected')]
+  return [...document.querySelectorAll('#days-picker .day-btn.selected')]
     .map(b => Number(b.dataset.day));
 }
 
